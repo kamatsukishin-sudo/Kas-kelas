@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aplikasi Kas Kelas</title>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body{
+      background:#f4f6f9;
+      padding:20px;
+      color:#333;
+    }
+
+    .container{
+      max-width:700px;
+      margin:auto;
+    }
+
+    .title{
+      text-align:center;
+      margin-bottom:20px;
+      font-size:28px;
+      font-weight:bold;
+    }
+
+    .saldo-box{
+      background:linear-gradient(135deg,#4CAF50,#2e7d32);
+      color:white;
+      padding:20px;
+      border-radius:15px;
+      text-align:center;
+      margin-bottom:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .saldo-box h2{
+      margin-bottom:10px;
+      font-size:20px;
+    }
+
+    .saldo{
+      font-size:32px;
+      font-weight:bold;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:15px;
+      margin-bottom:20px;
+      box-shadow:0 3px 8px rgba(0,0,0,0.08);
+    }
+
+    .card h3{
+      margin-bottom:15px;
+    }
+
+    form{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    input, textarea, select{
+      padding:12px;
+      border:1px solid #ccc;
+      border-radius:10px;
+      font-size:14px;
+    }
+
+    textarea{
+      resize:none;
+      height:80px;
+    }
+
+    button{
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#2196F3;
+      color:white;
+      font-size:15px;
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    button:hover{
+      background:#1976d2;
+    }
+
+    .transaksi{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      padding:15px;
+      border-radius:12px;
+      margin-bottom:12px;
+      color:white;
+    }
+
+    .masuk{
+      background:#4CAF50;
+    }
+
+    .keluar{
+      background:#f44336;
+    }
+
+    .info h4{
+      margin-bottom:5px;
+    }
+
+    .info p{
+      font-size:13px;
+      margin-bottom:3px;
+    }
+
+    .hapus{
+      background:white;
+      color:red;
+      border:none;
+      padding:8px 12px;
+      border-radius:8px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+    .empty{
+      text-align:center;
+      color:#777;
+      padding:20px;
+    }
+
+    @media(max-width:600px){
+      .saldo{
+        font-size:26px;
+      }
+
+      .transaksi{
+        flex-direction:column;
+      }
+
+      .hapus{
+        width:100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="title">Kas Kelas</div>
+
+    <div class="saldo-box">
+      <h2>Saldo Kas Saat Ini</h2>
+      <div class="saldo" id="saldo">Rp 0</div>
+    </div>
+
+    <div class="card">
+      <h3>Tambah Transaksi</h3>
+
+      <form id="formKas">
+        <select id="jenis" required>
+          <option value="">-- Pilih Jenis --</option>
+          <option value="masuk">Pemasukan</option>
+          <option value="keluar">Pengeluaran</option>
+        </select>
+
+        <input type="text" id="nama" placeholder="Nama transaksi" required />
+
+        <input type="number" id="jumlah" placeholder="Jumlah uang" required />
+
+        <input type="date" id="tanggal" required />
+
+        <textarea id="keterangan" placeholder="Keterangan"></textarea>
+
+        <button type="submit">Simpan Transaksi</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Riwayat Transaksi</h3>
+
+      <div id="listTransaksi"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const formKas = document.getElementById("formKas");
+    const listTransaksi = document.getElementById("listTransaksi");
+    const saldoElement = document.getElementById("saldo");
+
+    let transaksi = JSON.parse(localStorage.getItem("kasKelas")) || [];
+
+    function formatRupiah(angka){
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR"
+      }).format(angka);
+    }
+
+    function simpanData(){
+      localStorage.setItem("kasKelas", JSON.stringify(transaksi));
+    }
+
+    function hitungSaldo(){
+      let saldo = 0;
+
+      transaksi.forEach(item => {
+        if(item.jenis === "masuk"){
+          saldo += item.jumlah;
+        }else{
+          saldo -= item.jumlah;
+        }
+      });
+
+      saldoElement.textContent = formatRupiah(saldo);
+    }
+
+    function tampilkanTransaksi(){
+      listTransaksi.innerHTML = "";
+
+      if(transaksi.length === 0){
+        listTransaksi.innerHTML = `
+          <div class="empty">
+            Belum ada transaksi
+          </div>
+        `;
+        return;
+      }
+
+      transaksi
+        .slice()
+        .reverse()
+        .forEach((item, index) => {
+
+          const div = document.createElement("div");
+          div.classList.add("transaksi");
+          div.classList.add(item.jenis);
+
+          div.innerHTML = `
+            <div class="info">
+              <h4>${item.nama}</h4>
+              <p><strong>${formatRupiah(item.jumlah)}</strong></p>
+              <p>${item.tanggal}</p>
+              <p>${item.keterangan || "-"}</p>
+            </div>
+
+            <button class="hapus" onclick="hapusTransaksi(${transaksi.length - 1 - index})">
+              Hapus
+            </button>
+          `;
+
+          listTransaksi.appendChild(div);
+        });
+    }
+
+    function hapusTransaksi(index){
+      if(confirm("Hapus transaksi ini?")){
+        transaksi.splice(index,1);
+        simpanData();
+        tampilkanTransaksi();
+        hitungSaldo();
+      }
+    }
+
+    formKas.addEventListener("submit", function(e){
+      e.preventDefault();
+
+      const data = {
+        jenis: document.getElementById("jenis").value,
+        nama: document.getElementById("nama").value,
+        jumlah: parseInt(document.getElementById("jumlah").value),
+        tanggal: document.getElementById("tanggal").value,
+        keterangan: document.getElementById("keterangan").value
+      };
+
+      transaksi.push(data);
+
+      simpanData();
+      tampilkanTransaksi();
+      hitungSaldo();
+
+      formKas.reset();
+    });
+
+    tampilkanTransaksi();
+    hitungSaldo();
+  </script>
+
+</body>
+</html>
